@@ -17,8 +17,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../frontend')));
-app.use('/sources', express.static(path.join(__dirname, '../frontend/sources')));
+// Static serving removed because frontend is deployed separately
 
 // Ensure database connection before API/Auth routes (important for serverless functions)
 app.use(async (req, res, next) => {
@@ -63,7 +62,7 @@ let db;
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: "http://localhost:3000/auth/google/callback"
+  callbackURL: "https://clothy-backend.vercel.app/auth/google/callback"
 },
   async function (accessToken, refreshToken, profile, cb) {
     try {
@@ -1855,12 +1854,13 @@ app.get('/auth/google/callback',
       profileImage: user.profileImage
     }));
 
-    res.redirect(`/?token=${token}&user=${userData}`);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/?token=${token}&user=${userData}`);
   });
 
-// Serve frontend
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+// Default API route
+app.get('/', (req, res) => {
+  res.json({ message: "Clothy Backend API is running" });
 });
 
 // Start server if run directly (local development)
